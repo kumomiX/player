@@ -141,8 +141,8 @@ function buildDateSelector(config) {
   // We render an area larger than the visible SVG, to make sure axis labels
   // don't suddenly appear or disappear as they scroll past the edge of the display.
   const rendering = [
-    [display[0][0] - padding.left, display[0][1]],
-    [display[1][0] + padding.right, display[1][1]],
+    [display[0][0] - padding.left - initZoom * 2, display[0][1]],
+    [display[1][0] + padding.right + initZoom * 2, display[1][1]],
   ]
   const minScale =
     (display[1][0] - display[0][0]) / (rendering[1][0] - rendering[0][0])
@@ -166,19 +166,25 @@ function buildDateSelector(config) {
   //   .attr('height', 20)
   //   .attr('fill', '#000')
 
-  console.log(rendering)
   // Add listeners
   const zoomer = d3
     .zoom()
     .scaleExtent([minZoom, maxZoom])
     .translateExtent(rendering)
-    // .translateExtent([
-    //   [display[0][0] - padding.left - 400, display[0][1]],
-    //   [display[1][0] + padding.right, display[1][1]],
-    // ])
+    // .translateExtent(rendering)
     .extent(display)
-    .on('start', () => {
+    .on('start', (e) => {
       // videoRef.current.pause()
+      zoomer.translateExtent([
+        [
+          display[0][0] - padding.left - visWidth / (e.transform.k * 2),
+          display[0][1],
+        ],
+        [
+          display[1][0] + padding.right + visWidth / (e.transform.k * 2),
+          display[1][1],
+        ],
+      ])
     })
     .on('zoom', rescale)
     .on('end', () => {
@@ -211,6 +217,7 @@ function buildDateSelector(config) {
 
     // if (transform.k > 0) {
     zoomedScale = transform.rescaleX(scale)
+
     draw()
     // updateDate(zoomedScale.invert(visWidth / 2)) // -2.5 ????? padding left / right
     // }
