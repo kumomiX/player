@@ -132,6 +132,8 @@ function buildDateSelector(config) {
       margins.left - padding.left,
       visWidth - margins.right + padding.right,
     ])
+  // .clamp(true)
+
   let zoomedScale = scale.copy()
 
   const display = [
@@ -209,6 +211,29 @@ function buildDateSelector(config) {
 
   function draw() {
     drawScale(svg, zoomedScale, visHeight, margins)
+
+    svg.select('.keker').remove()
+    svg
+      .append('g')
+      .attr('transform', 'translate(' + zoomedScale(firstDay) + ', 0)')
+      .append('rect')
+      .attr('class', 'keker')
+      .attr('fill', 'white')
+      .attr('y', 0)
+      .attr('x', (-1 * visWidth) / 2)
+      .attr('height', visHeight)
+      .attr('width', visWidth / 2)
+    svg
+      .append('g')
+      .attr('transform', 'translate(' + zoomedScale(lastDay) + ', 0)')
+      .append('rect')
+      .attr('class', 'keker')
+      .attr('fill', 'white')
+      .attr('y', 0)
+      .attr('x', 0)
+      .attr('height', visHeight)
+      .attr('width', visWidth / 2)
+
     drawDial(svg, visWidth / 2)
   }
 
