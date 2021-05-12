@@ -1,15 +1,25 @@
-import ArchiveControls from '../../features/archive/Controls'
+import { useState } from 'react'
+import dayjs from 'dayjs'
+import ArchivePlayer from '../../features/archive/Player'
+import Head from 'next/head'
 
-export default function Page(params) {
+export default function ({ ...props }) {
+  const [date, setDate] = useState(dayjs().startOf('day'))
   return (
     <div
       style={{
-        display: 'grid',
-        placeItems: 'center',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
         height: '100vh',
         background: '#d2d2d2',
+        overflow: 'hidden',
       }}>
-      <ArchiveControls />
+      <Head>
+        <title>Player</title>
+      </Head>
+      <ArchivePlayer date={date} setDate={setDate} />
     </div>
   )
 }

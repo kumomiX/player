@@ -24,6 +24,7 @@ const ticksNum = 25
 
 export default function ArchiveControls({
   date = dayjs().startOf('day'),
+  onDragEnd,
   children,
 }) {
   const { ref, width = 1 } = useResizeObserver()
@@ -43,7 +44,7 @@ export default function ArchiveControls({
     [date]
   )
   const jumpTo = (time = date.hour(19)) => {
-    console.log('jump to ', time)
+    // console.log('jump to ', time)
     const t = -1 * (timeScale(time) - width / 2)
     x.set(t)
   }
@@ -56,6 +57,14 @@ export default function ArchiveControls({
       }
     }
   }, [width, date])
+
+  const handleDrag = () => {
+    const offset = -1 * x.get() + width / 2
+    const time = timeScale.invert(offset)
+    if (onDragEnd) {
+      onDragEnd(time)
+    }
+  }
 
   return (
     <div className={styles.wrapper}>
@@ -75,11 +84,8 @@ export default function ArchiveControls({
           // power: 1,
           restDelta: 1,
         }}
-        onDragEnd={(event, info) => {
-          // const offset = -1 * info.point.x + width / 2 + 1;
-          // const time = timeScale.invert(offset);
-          // console.log("test", offset);
-        }}
+        onDragEnd={handleDrag}
+        onDragTransitionEnd={handleDrag}
         style={{ x }}>
         {timeScale && (
           <svg
@@ -147,7 +153,7 @@ export default function ArchiveControls({
           }}
         />
       </div>
-      {children && typeof children === 'function' && children(jumpTo)}
+      {children && typeof children === 'function' && children({ jumpTo })}
     </div>
   )
 }

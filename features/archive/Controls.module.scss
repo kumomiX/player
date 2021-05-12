@@ -22,7 +22,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: var(--height);
+  height: var(--height, 150px);
+  width: 100%;
   font-size: 10px;
 }
 
@@ -63,4 +64,5 @@
   height: var(--height);
   user-select: none;
   transform: translateX(-50%);
+  color: var(--color-primary-main, red);
 }
