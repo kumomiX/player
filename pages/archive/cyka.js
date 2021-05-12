@@ -7,8 +7,6 @@ import Head from 'next/head'
 const start_date = 1619902800
 const end_date = 1619989199
 
-console.log(dayjs.unix(1619902800))
-
 export default function ({ ...props }) {
   const [date, setDate] = useState(dayjs.unix(1619902800))
   return (

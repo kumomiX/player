@@ -66,3 +66,8 @@
   transform: translateX(-50%);
   color: var(--color-primary-main, red);
 }
+
+.segment {
+  fill: var(--color-success-500, #34ba80);
+  fill-opacity: 0.2;
+}

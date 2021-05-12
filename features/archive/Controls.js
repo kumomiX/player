@@ -91,14 +91,8 @@ export default function ArchiveControls({
           restDelta: 1,
         }}
         onDragStart={onDragStart}
-        onDragEnd={() => {
-          console.log('drag end')
-          handleDrag()
-        }}
-        onDragTransitionEnd={() => {
-          console.log('trans end')
-          handleDrag()
-        }}
+        onDragEnd={handleDrag}
+        onDragTransitionEnd={handleDrag}
         style={{ x }}>
         {timeScale && (
           <svg
@@ -109,6 +103,7 @@ export default function ArchiveControls({
               <g id="ticks">
                 {timeScale.ticks(ticksNum).map(drawTick(timeScale))}
               </g>
+              {segments?.map(drawSegment(timeScale))}
               <g id="axis">
                 {timeScale.ticks(ticksNum * 3).map(drawAxis(timeScale))}
               </g>
@@ -117,7 +112,6 @@ export default function ArchiveControls({
                 height={1}
                 transform={`translate(0, ${dimensions.height / 2 + 10})`}
               />
-              {segments.map(drawSegment(timeScale))}
             </g>
           </svg>
         )}
@@ -178,8 +172,7 @@ const drawSegment = (scale) => (segment, i) =>
     <g
       key={segment.from}
       transform={`translate(${scale(dayjs.unix(segment.from))}, 0)`}
-      fill="green"
-      fillOpacity={0.1}>
+      className={styles.segment}>
       <rect
         width={(() => {
           const start = dayjs.unix(segment.from) //new Date(segment.from * 1000)
