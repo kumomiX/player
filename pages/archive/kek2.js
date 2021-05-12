@@ -10,6 +10,8 @@ import {
 import useResizeObserver from 'use-resize-observer'
 import dayjs from 'dayjs'
 
+import { inertiaHelper } from 'd3-inertia'
+
 const margin = {
   top: 0,
   right: 0,
@@ -116,26 +118,44 @@ function buildDateSelector(config) {
 
   if (!margins) margins = Object({ top: 0, right: 5, bottom: 0, left: 0 })
   if (!padding) padding = Object({ left: 200, right: 0 })
-  if (!visWidth) visWidth = width // Default to Observable global variable
+  if (!visWidth) visWidth = width // screen width
   if (!visHeight) visHeight = 70
   if (!initTranslate) initTranslate = 0
   let zoomWidth = visWidth - margins.right - margins.left
   if (!minZoom) minZoom = zoomWidth / (zoomWidth + padding.right + padding.left)
   if (!maxZoom) maxZoom = 10
   if (!initZoom) initZoom = 10
+
+  if (!lastDay) lastDay = d3.timeDay(new Date())
+  if (!firstDay) firstDay = d3.timeDay.offset(lastDay, -1)
+
+  //
+  const m = 50
+  const height = 100
+
   let date = initialSelection || firstDay
 
-  const scale = d3
+  const timeScale = d3
     .scaleUtc()
     .domain([firstDay, lastDay])
     .range([
       margins.left - padding.left,
       visWidth - margins.right + padding.right,
     ])
-  // .clamp(true)
+    .clamp(true)
 
-  let zoomedScale = scale.copy()
+  const svg = d3
+    .select(elementRef.current)
+    // .attr('viewBox', [0, 0, visWidth, visHeight])
+    .style('background', '#aeaeae')
+    .style('overflow', 'hidden')
+    .attr('height', visHeight)
+    .attr('width', visWidth)
 
+  const g = svg.append('g')
+
+  const transform = d3.zoomIdentity.translate(0, 0).scale(initZoom)
+  let zoomedScale = timeScale.copy()
   const display = [
     [margins.left, margins.top],
     [visWidth - margins.right, visHeight - margins.top],
@@ -146,144 +166,157 @@ function buildDateSelector(config) {
     [display[0][0] - padding.left - initZoom * 2, display[0][1]],
     [display[1][0] + padding.right + initZoom * 2, display[1][1]],
   ]
-  const minScale =
-    (display[1][0] - display[0][0]) / (rendering[1][0] - rendering[0][0])
-
-  const transform = d3.zoomIdentity.translate(0, 0).scale(initZoom)
-
-  const svg = d3
-    .select(elementRef.current)
-    .attr('viewBox', [0, 0, visWidth, visHeight])
-    .style('background', '#aeaeae')
-    .style('overflow', 'hidden')
-
-  // const node = elementRef
-  // node.value = { date, increment }
-
-  // svg
-  //   .append('rect')
-  //   .attr('width', visWidth / 2)
-  //   .attr('x', 0)
-  //   .attr('y', 0)
-  //   .attr('height', 20)
-  //   .attr('fill', '#000')
-
-  let start
-  // Add listeners
   const zoomer = d3
     .zoom()
     .scaleExtent([minZoom, maxZoom])
     .translateExtent(rendering)
+    // .translateExtent(rendering)
     .extent(display)
-    .on('start', (e) => {
-      start = e
-      // videoRef.current.pause()
-      zoomer.translateExtent([
-        [
-          display[0][0] - padding.left - visWidth / (e.transform.k * 2),
-          display[0][1],
-        ],
-        [
-          display[1][0] + padding.right + visWidth / (e.transform.k * 2),
-          display[1][1],
-        ],
-      ])
-    })
-    .on('zoom', rescale)
-    .on('end', () => {
-      updateDate(zoomedScale.invert(visWidth / 2)) // -2.5 ????? padding left / right
-      // videoRef.current.play()
-    })
-
-  svg.call(zoomer).call(zoomer.transform, transform)
-  // .on('click', () => goToDate(initialSelection))
-  // .on('click', chooseTime)
-  // .on('drag', (e) => {
-  //   console.log('dragstart', e)
+  // .on('start', (e) => {
+  //   // videoRef.current.pause()
+  //   zoomer.translateExtent([
+  //     [
+  //       display[0][0] - padding.left - visWidth / (e.transform.k * 2),
+  //       display[0][1],
+  //     ],
+  //     [
+  //       display[1][0] + padding.right + visWidth / (e.transform.k * 2),
+  //       display[1][1],
+  //     ],
+  //   ])
+  // })
+  // // .on('zoom', rescale)
+  // .on('end', () => {
+  //   updateDate(zoomedScale.invert(visWidth / 2)) // -2.5 ????? padding left / right
+  //   // videoRef.current.play()
   // })
 
-  translateToDate(initialSelection)
+  svg.call(zoomer).call(zoomer.transform, transform)
 
-  // HANDLERS
-  function updateDate(updatedDate) {
-    date = updatedDate
-    if (onDateChange) onDateChange(updatedDate)
+  // let axisGroup = svg
+  //   .append('g')
+  // .attr('transform', `translate(0,${m})`)
+
+  const axis = function (g, scale) {
+    g.selectAll('.x-axis-bottom')
+      .data(['x-axis-bottom'], (d) => d)
+      .join('g')
+      .attr('class', (d) => d)
+      .attr('transform', `translate(${0}, ${height - m})`)
+      .call(d3.axisBottom(scale))
   }
+
+  svg.call(axis, timeScale, height, m)
+
+  // svg.call(
+  //   zoom.on('zoom', function (e) {
+  //     let newScale = e.transform.rescaleX(timeScale)
+  //     svg.call(axis, newScale, height, m)
+  //   })
+  // )
+
+  var position = [visWidth / 2, visHeight / 2]
+  const radius = 20
+  var offset = { x: 0, y: 0 }
 
   function draw() {
-    drawScale(svg, zoomedScale, visHeight, margins)
-
-    // ADDED
-    svg.select('.keker').remove()
-    svg
-      .append('g')
-      .attr('transform', 'translate(' + zoomedScale(firstDay) + ', 0)')
-      .append('rect')
-      .attr('class', 'keker')
-      .attr('fill', 'white')
-      .attr('y', 0)
-      .attr('x', (-1 * visWidth) / 2)
-      .attr('height', visHeight)
-      .attr('width', visWidth / 2)
-    svg
-      .append('g')
-      .attr('transform', 'translate(' + zoomedScale(lastDay) + ', 0)')
-      .append('rect')
-      .attr('class', 'keker')
-      .attr('fill', 'white')
-      .attr('y', 0)
-      .attr('x', 0)
-      .attr('height', visHeight)
-      .attr('width', visWidth / 2)
+    g.attr('transform', `translate(${position[0]}, ${position[1]})`)
   }
-  drawDial(svg, visWidth / 2)
+  draw()
 
-  let prevX = null
-  function rescale(e) {
-    const { transform } = e
+  var circle = d3
+    .select('g')
+    .append('circle')
+    .attr('class', 'circle')
+    .attr('r', radius)
 
-    let dX = transform.x - (prevX || 0)
-
-    console.log(transform.toString())
-    transform.applyX(100)
-    console.log(transform.toString())
-    console.log('-------')
-
-    // let newX = transform.x
-    // console.log(newX, start?.transform.x)
-
-    // if (transform.k > 0) {
-    zoomedScale = transform.rescaleX(scale)
-
-    draw()
-    prevX = transform.x
-
-    // updateDate(zoomedScale.invert(visWidth / 2)) // -2.5 ????? padding left / right
-    // }
-
-    // if (wasPlaying) videoRef.current.play()
+  /* Function to keep the ball inside the view */
+  function updatePosition(newPosition, offset) {
+    if (offset === undefined) {
+      offset = { x: 0, y: 0 }
+    }
+    newPosition[0] = Math.max(
+      radius,
+      Math.min(newPosition[0] + offset.x, visWidth - radius)
+    )
+    newPosition[1] = Math.max(
+      radius,
+      Math.min(newPosition[1] + offset.y, visHeight - radius)
+    )
+    position = newPosition
   }
 
-  function translateToDate(date) {
-    svg.call(zoomer).call(zoomer.translateTo, scale(date))
+  function getTransformParameters(transformString) {
+    var values = transformString
+      .substr('translate('.length)
+      .split(',')
+      .map(function (d) {
+        return parseInt(d, 10)
+      })
+    return { x: values[0], y: values[1] }
   }
 
-  // function chooseTime(e) {
-  //   const [x] = d3.pointer(e)
-  //   updateDate(zoomedScale.invert(x))
-  //   // updateDate(date)
-  //   // node.dispatchEvent(new CustomEvent('input'))
-  //   draw()
-  // }
+  var inertia = inertiaHelper({
+    start: function () {
+      var transform = getTransformParameters(g.attr('transform'))
+      offset = {
+        x: transform.x - inertia.position[0],
+        y: transform.y - inertia.position[1],
+      }
+    },
+    move: function () {
+      updatePosition(inertia.position, offset)
+      draw()
+    },
+    render: function (t) {
+      updatePosition([
+        // velocity is constant, so I use t**2 to make it look like it slows down
+        // 0.25 is just to slow down the ball so it doesn't fly off
+        inertia.position[0] + 0.25 * t ** 2 * inertia.velocity[0],
+        inertia.position[1] + 0.25 * t ** 2 * inertia.velocity[1],
+      ])
+      draw()
+    },
+  })
 
-  // function increment(dt) {
-  //   updateDate(d3.timeDay.offset(date, dt))
-  //   // updateDate(date)
-  //   // node.dispatchEvent(new CustomEvent('input'))
-  //   draw()
-  // }
+  // var position = [0, 0],
+  //   startposition,
+  //   endposition
+  // var offset = { x: 0, y: 0 }
+  // var n = 10000 // reference time in ms
+  // var inertia = inertiaHelper({
+  //   start: function () {
+  //     startposition = inertia.position
+  //   },
+  //   move: function () {
+  //     draw([
+  //       position[0] + inertia.position[0] - startposition[0],
+  //       position[1] + inertia.position[1] - startposition[1],
+  //     ])
+  //   },
+  //   end: function () {
+  //     position = endposition = [
+  //       position[0] + inertia.position[0] - startposition[0],
+  //       position[1] + inertia.position[1] - startposition[1],
+  //     ]
+  //   },
+  //   render: function (t) {
+  //     position = [
+  //       endposition[0] + t * (1 - t) * inertia.velocity[0],
+  //       endposition[1] + t * (1 - t) * inertia.velocity[1],
+  //     ]
+  //     draw(position)
+  //   },
+  //   time: n,
+  // })
 
-  return { translateToDate }
+  svg.call(
+    d3
+      .drag()
+      .on('start', inertia.start)
+      .on('drag', inertia.move)
+      .on('end', inertia.end)
+  )
 }
 
 export default function PlayerKek() {
@@ -297,13 +330,8 @@ export default function PlayerKek() {
 
   useLayoutEffect(() => {
     if (playerWidth > 1) {
+      console.log('reß')
       vis.current = buildDateSelector({
-        firstDay: new Date(2020, 4, 1), // Note: This is November! (January is 0)
-        lastDay: new Date(2020, 4, 2),
-        margins: margin,
-        padding: { left: 0, right: 0 },
-        initZoom: 4,
-        //(margin.left + margin.right - playerWidth) * 9, // Start at right end of scale -> initTranslate
         width: playerWidth,
         elementRef: svgRef,
         videoRef,
@@ -337,15 +365,16 @@ export default function PlayerKek() {
           setPaused(false)
         }}
         onClick={togglePlayState}
-        onTimeUpdate={(e) => {
-          vis.current.translateToDate(
-            dayjs(date)
-              .add(e.currentTarget.currentTime - lastTick.current, 's')
-              .toDate()
-          )
+        // onTimeUpdate={(e) => {
+        //   vis.current.translateToDate(
+        //     dayjs(date)
+        //       .add(e.currentTarget.currentTime - lastTick.current, 's')
+        //       .toDate()
+        //   )
 
-          lastTick.current = e.currentTarget.currentTime
-        }}></video>
+        //   lastTick.current = e.currentTarget.currentTime
+        // }}
+      ></video>
       <svg ref={svgRef} />
       {date?.toLocaleTimeString()}
       <br />
