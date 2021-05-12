@@ -3,7 +3,11 @@ import ArchiveControls from '../../features/archive/Controls'
 import dayjs from 'dayjs'
 import ReactPlayer from 'react-player/lazy'
 
-export default function ArchivePlayer({ date, setDate }) {
+export default function ArchivePlayer({
+  url = 'https://www.youtube.com/watch?v=xmGaAjeqaBQ',
+  date,
+  setDate,
+}) {
   const player = useRef()
   const [duration, setDuration] = useState(0)
   const [playing, setPlaying] = useState(true)
@@ -11,6 +15,7 @@ export default function ArchivePlayer({ date, setDate }) {
     setPlaying(!playing)
   }, [playing])
 
+  console.log(duration)
   return (
     <>
       <div>
@@ -47,7 +52,7 @@ export default function ArchivePlayer({ date, setDate }) {
         //   setPlaying(true)
         // }}
         //
-        url="https://www.youtube.com/watch?v=xmGaAjeqaBQ"
+        url={url}
         autoPlay
         muted={true}
         playsinline

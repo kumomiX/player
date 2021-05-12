@@ -84,8 +84,8 @@ export default function ArchiveControls({
         }}
         dragTransition={{
           bounceStiffness: 100,
-          bounceDamping: 30,
-          min: 10,
+          bounceDamping: 14,
+          min: 50,
           max: 100,
           // power: 1,
           restDelta: 1,

@@ -23,7 +23,11 @@ export default function ({ ...props }) {
       <Head>
         <title>Player</title>
       </Head>
-      <ArchivePlayer date={date} setDate={setDate} />
+      <ArchivePlayer
+        // url="https://cvs.fastel.biz/e8533209-14a6-4346-954f-86bfaa7040e5/archive-1619902800-3600"
+        date={date}
+        setDate={setDate}
+      />
     </div>
   )
 }
