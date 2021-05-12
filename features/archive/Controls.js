@@ -25,6 +25,7 @@ const ticksNum = 25
 export default function ArchiveControls({
   date = dayjs().startOf('day'),
   onDragEnd,
+  onDragStart,
   children,
 }) {
   const { ref, width = 1 } = useResizeObserver()
@@ -39,8 +40,7 @@ export default function ArchiveControls({
           dimensions.margin.left,
           dimensions.width - dimensions.margin.right,
         ])
-        .clamp(true)
-        .nice(),
+        .clamp(true),
     [date]
   )
   const jumpTo = (time = date.hour(19)) => {
@@ -84,8 +84,15 @@ export default function ArchiveControls({
           // power: 1,
           restDelta: 1,
         }}
-        onDragEnd={handleDrag}
-        onDragTransitionEnd={handleDrag}
+        onDragStart={onDragStart}
+        onDragEnd={() => {
+          console.log('drag end')
+          handleDrag()
+        }}
+        onDragTransitionEnd={() => {
+          console.log('trans end')
+          handleDrag()
+        }}
         style={{ x }}>
         {timeScale && (
           <svg

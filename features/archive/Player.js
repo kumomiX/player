@@ -5,6 +5,7 @@ import ReactPlayer from 'react-player/lazy'
 
 export default function ArchivePlayer({ date, setDate }) {
   const player = useRef()
+  const [duration, setDuration] = useState(0)
   const [playing, setPlaying] = useState(true)
   const togglePlayState = useCallback(() => {
     setPlaying(!playing)
@@ -12,6 +13,15 @@ export default function ArchivePlayer({ date, setDate }) {
 
   return (
     <>
+      <div>
+        <button
+          onClick={() => {
+            player.current.seekTo(duration - 1, 'seconds')
+          }}>
+          to end
+        </button>
+      </div>
+
       <ReactPlayer
         ref={player}
         playing={playing}
@@ -20,9 +30,17 @@ export default function ArchivePlayer({ date, setDate }) {
         onPlay={() => {
           setPlaying(true)
         }}
-        onProgress={({ played, playedSeconds }) => {
-          setDate(date.startOf('day').second(playedSeconds))
+        onEnded={() => {
+          setPlaying(false)
         }}
+        onProgress={({ played, playedSeconds }) => {
+          console.log('prog', playedSeconds)
+          const d = date.startOf('day').add(playedSeconds, 's')
+          setDate(d)
+
+          // if (!playing) setPlaying(true)
+        }}
+        onDuration={(d) => setDuration(d)}
         // onSeek={}
         // onReady={() => {
         //   console.log('seek')
@@ -45,11 +63,17 @@ export default function ArchivePlayer({ date, setDate }) {
 
       <ArchiveControls
         date={date}
+        onDragStart={() => {
+          setPlaying(false)
+        }}
         onDragEnd={(time) => {
           if (player.current) {
-            // setPlaying(false)
             const seconds = dayjs(time).diff(date.startOf('day'), 'second')
+            console.log(seconds)
             player.current.seekTo(seconds, 'seconds')
+
+            // console.log(seconds)
+            if (seconds >= duration) return
           }
         }}
       />
