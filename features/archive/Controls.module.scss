@@ -23,6 +23,7 @@
   justify-content: center;
   align-items: center;
   height: var(--height);
+  font-size: 10px;
 }
 
 .dragArea {
@@ -44,6 +45,14 @@
   top: 0;
   left: 0;
   /* left: calc(50% - var(--height) / 2); */
+
+  & svg {
+    font-size: 10px;
+    user-select: none;
+    cursor: ew-resize;
+    font-family: 'Arial';
+    color: var(--color-gray-700, #333);
+  }
 }
 
 .cursor {

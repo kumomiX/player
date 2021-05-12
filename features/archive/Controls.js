@@ -4,7 +4,7 @@ import * as d3 from 'd3'
 import useResizeObserver from 'use-resize-observer'
 import dayjs from 'dayjs'
 import { UilAngleDown } from '@iconscout/react-unicons'
-import styles from './Controls.module.css'
+import styles from './Controls.module.scss'
 
 const dimensions = {
   width: 1600,
@@ -85,21 +85,15 @@ export default function ArchiveControls({
           <svg
             viewBox={'0 0 ' + dimensions.width + ' ' + dimensions.height}
             width={dimensions.width}
-            height={dimensions.height}
-            style={{
-              fontSize: 10,
-              userSelect: 'none',
-              cursor: 'ew-resize',
-              fontFamily: 'Arial',
-            }}>
-            <g fill="black">
+            height={dimensions.height}>
+            <g fill="currentColor">
               <g>
                 {timeScale.ticks(ticksNum).map((d, i) => (
                   <g key={d} transform={`translate(${timeScale(d)}, 0)`}>
                     <rect
                       width={dimensions.width / ticksNum + 2}
                       height={dimensions.height}
-                      fill={'#ffffff'}
+                      fill="#fff"
                       fillOpacity={i % 2 === 0 ? 0.4 : 0.6}
                     />
                     <text
