@@ -34,7 +34,7 @@ export default function ArchivePlayer({ date, setDate }) {
           setPlaying(false)
         }}
         onProgress={({ played, playedSeconds }) => {
-          console.log('prog', playedSeconds)
+          // console.log('prog', playedSeconds)
           const d = date.startOf('day').add(playedSeconds, 's')
           setDate(d)
 

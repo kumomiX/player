@@ -12,6 +12,12 @@ const dimensions = {
   margin: { top: 5, right: 0, bottom: 5, left: 0 },
 }
 
+const segments = [
+  { duration: 9486, from: 1619902800 },
+  { duration: 66099, from: 1619912303 },
+  { duration: 2087, from: 1619987112 },
+]
+
 const f = (d) => {
   return d.getMinutes() === 30 ? null : d3.timeFormat('%H:%M')(d)
 }
@@ -20,7 +26,7 @@ const ticksNum = 25
 //  const ticks = scale.ticks(tickCount);
 // const tickFormat = scale.tickFormat(tickCount);
 
-// START USING MARGIN TOP / BOTTOM
+// TODO: START USING MARGIN TOP / BOTTOM
 
 export default function ArchiveControls({
   date = dayjs().startOf('day'),
@@ -99,45 +105,19 @@ export default function ArchiveControls({
             viewBox={'0 0 ' + dimensions.width + ' ' + dimensions.height}
             width={dimensions.width}
             height={dimensions.height}>
-            <g fill="currentColor">
-              <g>
-                {timeScale.ticks(ticksNum).map((d, i) => (
-                  <g key={d} transform={`translate(${timeScale(d)}, 0)`}>
-                    <rect
-                      width={dimensions.width / ticksNum + 2}
-                      height={dimensions.height}
-                      fill="#fff"
-                      fillOpacity={i % 2 === 0 ? 0.4 : 0.6}
-                    />
-                    <text
-                      transform={`translate(${
-                        dimensions.width / ticksNum / 2 - 10
-                      }, ${dimensions.height / 2 + 5})`}>
-                      {f(d)}
-                    </text>
-                  </g>
-                ))}
+            <g fill="currentColor" id="bounds">
+              <g id="ticks">
+                {timeScale.ticks(ticksNum).map(drawTick(timeScale))}
               </g>
-              <g>
-                {timeScale.ticks(ticksNum * 3).map((d, i) => (
-                  <g key={d} transform={`translate(${timeScale(d)}, 0)`}>
-                    <rect
-                      width={1}
-                      height={i % 4 === 0 ? 15 : i % 4 === 2 ? 10 : 5}
-                    />
-                    <rect
-                      width={1}
-                      height={i % 4 === 0 ? 15 : i % 4 === 2 ? 10 : 5}
-                      transform={`translate(0, ${dimensions.height}) rotate(180)`}
-                    />
-                  </g>
-                ))}
+              <g id="axis">
+                {timeScale.ticks(ticksNum * 3).map(drawAxis(timeScale))}
               </g>
               <rect
                 width="100%"
                 height={1}
                 transform={`translate(0, ${dimensions.height / 2 + 10})`}
               />
+              {segments.map(drawSegment(timeScale))}
             </g>
           </svg>
         )}
@@ -164,3 +144,50 @@ export default function ArchiveControls({
     </div>
   )
 }
+
+const drawTick = (scale) => (d, i) =>
+  (
+    <g key={d} transform={`translate(${scale(d)}, 0)`}>
+      <rect
+        width={dimensions.width / ticksNum + 2}
+        height={dimensions.height}
+        fill="#fff"
+        fillOpacity={i % 2 === 0 ? 0.4 : 0.6}
+      />
+      <text
+        transform={`translate(${dimensions.width / ticksNum / 2 - 10}, ${
+          dimensions.height / 2 + 5
+        })`}>
+        {f(d)}
+      </text>
+    </g>
+  )
+const drawAxis = (scale) => (d, i) =>
+  (
+    <g key={d} transform={`translate(${scale(d)}, 0)`}>
+      <rect width={1} height={i % 4 === 0 ? 15 : i % 4 === 2 ? 10 : 5} />
+      <rect
+        width={1}
+        height={i % 4 === 0 ? 15 : i % 4 === 2 ? 10 : 5}
+        transform={`translate(0, ${dimensions.height}) rotate(180)`}
+      />
+    </g>
+  )
+const drawSegment = (scale) => (segment, i) =>
+  (
+    <g
+      key={segment.from}
+      transform={`translate(${scale(dayjs.unix(segment.from))}, 0)`}
+      fill="green"
+      fillOpacity={0.1}>
+      <rect
+        width={(() => {
+          const start = dayjs.unix(segment.from) //new Date(segment.from * 1000)
+          const end = dayjs.unix(segment.from).add(segment.duration, 's')
+          //new Date((from + duration) * 1000)
+          return scale(end) - scale(start)
+        })()}
+        height={dimensions.height}
+      />
+    </g>
+  )
