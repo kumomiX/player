@@ -17,7 +17,7 @@ export default function ({ ...props }) {
         alignItems: 'center',
         justifyContent: 'center',
         height: '100vh',
-        background: '#d2d2d2',
+        background: '#E6E9EC',
         overflow: 'hidden',
       }}>
       <Head>

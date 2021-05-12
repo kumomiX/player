@@ -100,10 +100,10 @@ export default function ArchiveControls({
             width={dimensions.width}
             height={dimensions.height}>
             <g fill="currentColor" id="bounds">
+              {segments?.map(drawSegment(timeScale))}
               <g id="ticks">
                 {timeScale.ticks(ticksNum).map(drawTick(timeScale))}
               </g>
-              {segments?.map(drawSegment(timeScale))}
               <g id="axis">
                 {timeScale.ticks(ticksNum * 3).map(drawAxis(timeScale))}
               </g>
