@@ -2,26 +2,72 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import ArchiveControls from '../../features/archive/Controls'
 import dayjs from 'dayjs'
 import ReactPlayer from 'react-player/lazy'
+import { convertArchiveUrl } from './utils'
+
+//[{duration: 43577, from: 1620853200}]
+//https://cvs.fastel.biz/840bc45e-1c7a-4c3f-9c24-0840969e7db4/archive-$utc_time_from_sec-$duration_sec
+//duration: 86399
+//from: 1620680400
 
 export default function ArchivePlayer({
-  url = 'https://www.youtube.com/watch?v=xmGaAjeqaBQ',
+  // url = 'https://www.youtube.com/watch?v=xmGaAjeqaBQ',
+  url = 'https://cvs.fastel.biz/840bc45e-1c7a-4c3f-9c24-0840969e7db4/archive-$utc_time_from_sec-$duration_sec',
   date,
   setDate,
 }) {
   const player = useRef()
   const [duration, setDuration] = useState(0)
   const [playing, setPlaying] = useState(true)
-  const togglePlayState = useCallback(() => {
-    setPlaying(!playing)
-  }, [playing])
+  const [loading, setLoading] = useState(true)
+  const togglePlayState = () => setPlaying(!playing)
 
-  console.log(duration)
+  const [segments, setSegments] = useState([
+    { duration: 43577, from: 1620853200 },
+  ]) // segments depend on date
+  useEffect(() => {
+    // date changes -> update segments
+  }, [date])
+  const [currentSegmentIdx, setCurrentSegmentIdx] = useState(0)
+  useEffect(() => {
+    setCurrentSegmentIdx(0)
+  }, [segments])
+
+  const [archiveLink, setArchiveLink] = useState(null)
+  // link depends on segments
+  useEffect(() => {
+    const segment = segments[currentSegmentIdx]
+    console.log(segment)
+    if (segment) {
+      setArchiveLink(convertArchiveUrl(url, segment.from, segment.duration))
+    }
+  }, [url, currentSegmentIdx, segments])
+
   return (
     <>
       <div>
+        {loading && 'loading...'}
         <button
           onClick={() => {
-            player.current.seekTo(duration - 1, 'seconds')
+            setPlaying(false)
+            const t = player.current.getCurrentTime()
+            player.current.seekTo(t - 15, 'seconds')
+            setPlaying(true)
+          }}>
+          -15
+        </button>
+        <button
+          onClick={() => {
+            setPlaying(false)
+            const t = player.current.getCurrentTime()
+            player.current.seekTo(t + 15, 'seconds')
+            setPlaying(true)
+          }}>
+          +15
+        </button>
+        <button onClick={togglePlayState}>{playing ? 'pause' : 'play'}</button>
+        <button
+          onClick={() => {
+            player.current.seekTo(duration, 'seconds')
           }}>
           to end
         </button>
@@ -36,7 +82,14 @@ export default function ArchivePlayer({
           setPlaying(true)
         }}
         onEnded={() => {
-          setPlaying(false)
+          const nextIdx = currentSegmentIdx + 1
+          const nextSegment = segments[nextIdx]
+          if (nextSegment) {
+            setCurrentSegmentIdx(currentSegmentIdx + 1)
+          } else {
+            setPlaying(false)
+            alert('end')
+          }
         }}
         onProgress={({ played, playedSeconds }) => {
           // console.log('prog', playedSeconds)
@@ -46,13 +99,19 @@ export default function ArchivePlayer({
           // if (!playing) setPlaying(true)
         }}
         onDuration={(d) => setDuration(d)}
+        onBuffer={() => {
+          setLoading(true)
+        }}
+        onBufferEnd={() => {
+          setLoading(false)
+        }}
         // onSeek={}
         // onReady={() => {
         //   console.log('seek')
         //   setPlaying(true)
         // }}
         //
-        url={url}
+        url={archiveLink}
         autoPlay
         muted={true}
         playsinline
@@ -67,18 +126,26 @@ export default function ArchivePlayer({
       />
 
       <ArchiveControls
+        segments={segments}
         date={date}
         onDragStart={() => {
           setPlaying(false)
         }}
         onDragEnd={(time) => {
           if (player.current) {
+            // check if inside cur segment and if segment available
+
+            // seek  inside cur segment
             const seconds = dayjs(time).diff(date.startOf('day'), 'second')
             console.log(seconds)
             player.current.seekTo(seconds, 'seconds')
 
-            // console.log(seconds)
-            if (seconds >= duration) return
+            if (seconds >= duration) {
+              // check segment
+              return
+            } else {
+              setPlaying(true)
+            }
           }
         }}
       />

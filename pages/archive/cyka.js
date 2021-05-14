@@ -3,12 +3,8 @@ import dayjs from 'dayjs'
 import ArchivePlayer from '../../features/archive/Player'
 import Head from 'next/head'
 
-//api.stage.sirin.cc/api/public/v2/cameras/7171f0d0-7763-48b4-b5d7-05624f96cc58/archive_timeline?start_date=1619902800&end_date=1619989199
-const start_date = 1619902800
-const end_date = 1619989199
-
-export default function ({ ...props }) {
-  const [date, setDate] = useState(dayjs.unix(1619902800))
+export default function Page({ ...props }) {
+  const [date, setDate] = useState(dayjs.unix(1620853200))
   return (
     <div
       style={{

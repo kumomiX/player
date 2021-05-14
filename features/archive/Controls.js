@@ -11,18 +11,12 @@ const dimensions = {
   height: 150,
   margin: { top: 5, right: 0, bottom: 5, left: 0 },
 }
-
-const segments = [
-  { duration: 9486, from: 1619902800 },
-  { duration: 66099, from: 1619912303 },
-  { duration: 2087, from: 1619987112 },
-]
+const ticksNum = 25
 
 const f = (d) => {
   return d.getMinutes() === 30 ? null : d3.timeFormat('%H:%M')(d)
 }
 
-const ticksNum = 25
 //  const ticks = scale.ticks(tickCount);
 // const tickFormat = scale.tickFormat(tickCount);
 
@@ -30,6 +24,7 @@ const ticksNum = 25
 
 export default function ArchiveControls({
   date = dayjs().startOf('day'),
+  segments,
   onDragEnd,
   onDragStart,
   children,
