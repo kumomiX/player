@@ -63,7 +63,7 @@ export default function ArchiveControls({
     const offset = -1 * x.get() + width / 2
     const time = timeScale.invert(offset)
     if (onDragEnd) {
-      onDragEnd(time)
+      onDragEnd(dayjs(time))
     }
   }
 

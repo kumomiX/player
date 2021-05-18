@@ -4,7 +4,7 @@ import ArchivePlayer from '../../features/archive/Player'
 import Head from 'next/head'
 
 export default function Page({ ...props }) {
-  const [date, setDate] = useState(dayjs.unix(1620853200))
+  const [date, setDate] = useState(dayjs.unix(1621198800))
   return (
     <div
       style={{

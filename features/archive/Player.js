@@ -15,6 +15,8 @@ export default function ArchivePlayer({
   date,
   setDate,
 }) {
+  const controls = useRef()
+
   const player = useRef()
   const [duration, setDuration] = useState(0)
   const [playing, setPlaying] = useState(true)
@@ -22,7 +24,10 @@ export default function ArchivePlayer({
   const togglePlayState = () => setPlaying(!playing)
 
   const [segments, setSegments] = useState([
-    { duration: 43577, from: 1620853200 },
+    { duration: 1449, from: 1621198800 },
+    { duration: 48094, from: 1621200353 },
+    { duration: 3497, from: 1621248551 },
+    { duration: 33131, from: 1621252068 },
   ]) // segments depend on date
   useEffect(() => {
     // date changes -> update segments
@@ -36,11 +41,41 @@ export default function ArchivePlayer({
   // link depends on segments
   useEffect(() => {
     const segment = segments[currentSegmentIdx]
-    console.log(segment)
+    console.log(segment, currentSegmentIdx)
     if (segment) {
       setArchiveLink(convertArchiveUrl(url, segment.from, segment.duration))
     }
   }, [url, currentSegmentIdx, segments])
+  useEffect(() => {
+    console.log(archiveLink)
+  }, [archiveLink])
+
+  const handleDrag = (time) => {
+    if (player.current) {
+      // check if inside cur segment and if segment available
+      const currentSegment = segments[currentSegmentIdx]
+      const timeUnix = time.unix()
+      const elapsed = time.diff(date.startOf('day'), 'second')
+
+      // check segment
+      if (elapsed <= duration && timeUnix >= currentSegment.from) {
+        // current segment
+        const secondsSinceSegStarted = timeUnix - currentSegment.from
+        player.current.seekTo(secondsSinceSegStarted, 'seconds')
+        setPlaying(true)
+      } else {
+        // other segment
+        const newSeg = segments?.find(
+          (s) => timeUnix >= s.from && timeUnix <= s.from + s.duration
+        )
+        const newIdx = segments.indexOf(newSeg)
+        setCurrentSegmentIdx(newIdx)
+        const diff = timeUnix - newSeg.from
+        player.current.seekTo(diff, 'seconds')
+        setPlaying(true)
+      }
+    }
+  }
 
   return (
     <>
@@ -85,20 +120,37 @@ export default function ArchivePlayer({
           const nextIdx = currentSegmentIdx + 1
           const nextSegment = segments[nextIdx]
           if (nextSegment) {
-            setCurrentSegmentIdx(currentSegmentIdx + 1)
+            setCurrentSegmentIdx(nextIdx)
+            // setDate(dayjs.unix(nextSegment.from))
           } else {
             setPlaying(false)
             alert('end')
           }
         }}
         onProgress={({ played, playedSeconds }) => {
-          // console.log('prog', playedSeconds)
-          const d = date.startOf('day').add(playedSeconds, 's')
-          setDate(d)
+          const { from } = segments?.[currentSegmentIdx]
+
+          // const d = date.startOf('day').add(playedSeconds, 's')
+          // setDate(d)
+
+          //           if (playedSeconds > from + duration) {
+          // setCurrentSegmentIdx
+          //           } else {
+
+          //           }
+          console.log('prog', playedSeconds)
+          const d = dayjs.unix(from + playedSeconds)
+          controls.current.jumpTo(d)
+
+          //
+          // setDate(d)
 
           // if (!playing) setPlaying(true)
         }}
-        onDuration={(d) => setDuration(d)}
+        onDuration={(d) => {
+          console.log('upd duration', d)
+          setDuration(d)
+        }}
         onBuffer={() => {
           setLoading(true)
         }}
@@ -131,24 +183,11 @@ export default function ArchivePlayer({
         onDragStart={() => {
           setPlaying(false)
         }}
-        onDragEnd={(time) => {
-          if (player.current) {
-            // check if inside cur segment and if segment available
-
-            // seek  inside cur segment
-            const seconds = dayjs(time).diff(date.startOf('day'), 'second')
-            console.log(seconds)
-            player.current.seekTo(seconds, 'seconds')
-
-            if (seconds >= duration) {
-              // check segment
-              return
-            } else {
-              setPlaying(true)
-            }
-          }
+        onDragEnd={handleDrag}>
+        {(c) => {
+          controls.current = c
         }}
-      />
+      </ArchiveControls>
     </>
   )
 }
