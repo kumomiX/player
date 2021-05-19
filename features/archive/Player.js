@@ -36,7 +36,7 @@ export default function ArchivePlayer({
     { duration: 33131, from: 1621252068 },
   ]) // segments depend on date
   useEffect(() => {
-    // date changes -> update segments
+    // TODO: date changes -> update segments
   }, [date])
   const [currentSegmentIdx, setCurrentSegmentIdx] = useState(0)
   useEffect(() => {
