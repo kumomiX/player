@@ -36,18 +36,17 @@ export default function ArchivePlayer({
   useEffect(() => {
     setCurrentSegmentIdx(0)
   }, [segments])
-
   const [archiveLink, setArchiveLink] = useState(null)
   // link depends on segments
   useEffect(() => {
     const segment = segments[currentSegmentIdx]
-    console.log(segment, currentSegmentIdx)
+    console.log('Segment changed to ', currentSegmentIdx, segment)
     if (segment) {
       setArchiveLink(convertArchiveUrl(url, segment.from, segment.duration))
     }
   }, [url, currentSegmentIdx, segments])
   useEffect(() => {
-    console.log(archiveLink)
+    console.log('Archive link changed to ', archiveLink)
   }, [archiveLink])
 
   const handleDrag = (time) => {
@@ -138,14 +137,9 @@ export default function ArchivePlayer({
           //           } else {
 
           //           }
-          console.log('prog', playedSeconds)
+
           const d = dayjs.unix(from + playedSeconds)
           controls.current.jumpTo(d)
-
-          //
-          // setDate(d)
-
-          // if (!playing) setPlaying(true)
         }}
         onDuration={(d) => {
           console.log('upd duration', d)
@@ -183,7 +177,8 @@ export default function ArchivePlayer({
         onDragStart={() => {
           setPlaying(false)
         }}
-        onDragEnd={handleDrag}>
+        onDragEnd={handleDrag}
+        archiveUrl={url}>
         {(c) => {
           controls.current = c
         }}

@@ -5,6 +5,7 @@ import useResizeObserver from 'use-resize-observer'
 import dayjs from 'dayjs'
 import { UilAngleDown } from '@iconscout/react-unicons'
 import styles from './Controls.module.scss'
+import { convertRanges } from './utils'
 
 const dimensions = {
   width: 1600,
@@ -12,6 +13,8 @@ const dimensions = {
   margin: { top: 5, right: 0, bottom: 5, left: 0 },
 }
 const ticksNum = 25
+const thumbW = 66
+const thumbH = (66 * 9) / 16
 
 const f = (d) => {
   return d.getMinutes() === 30 ? null : d3.timeFormat('%H:%M')(d)
@@ -24,6 +27,7 @@ const f = (d) => {
 
 export default function ArchiveControls({
   date = dayjs().startOf('day'),
+  archiveUrl,
   segments,
   onDragEnd,
   onDragStart,
@@ -67,6 +71,17 @@ export default function ArchiveControls({
     }
   }
 
+  const [thumbs, setThumbs] = React.useState(null)
+  const getThumbs = () => {
+    const ticksQty = Math.floor(width / thumbW)
+    const ranges = timeScale.ticks(ticksQty)
+    const urls = convertRanges(ranges, archiveUrl)
+    setThumbs(urls)
+  }
+  React.useEffect(() => {
+    getThumbs()
+  }, [archiveUrl, width])
+
   return (
     <div className={styles.wrapper}>
       <motion.div className={styles.dragArea} ref={ref} />
@@ -100,7 +115,7 @@ export default function ArchiveControls({
                 {timeScale.ticks(ticksNum).map(drawTick(timeScale))}
               </g>
               <g id="axis">
-                {timeScale.ticks(ticksNum * 3).map(drawAxis(timeScale))}
+                {timeScale.ticks(ticksNum * 3).map(drawAxis(timeScale, thumbs))}
               </g>
               <rect
                 width="100%"
@@ -134,6 +149,19 @@ export default function ArchiveControls({
   )
 }
 
+const Thumb = ({ src }) => {
+  return (
+    <foreignObject
+      x="0"
+      y={dimensions.height / 2 + 12}
+      height={thumbH}
+      width={thumbW}>
+      <video height={thumbH} width={thumbW}>
+        <source src={src} type="video/mp4" />
+      </video>
+    </foreignObject>
+  )
+}
 const drawTick = (scale) => (d, i) =>
   (
     <g key={d} transform={`translate(${scale(d)}, 0)`}>
@@ -151,7 +179,7 @@ const drawTick = (scale) => (d, i) =>
       </text>
     </g>
   )
-const drawAxis = (scale) => (d, i) =>
+const drawAxis = (scale, thumbs) => (d, i) =>
   (
     <g key={d} transform={`translate(${scale(d)}, 0)`}>
       <rect width={1} height={i % 4 === 0 ? 15 : i % 4 === 2 ? 10 : 5} />
@@ -160,6 +188,7 @@ const drawAxis = (scale) => (d, i) =>
         height={i % 4 === 0 ? 15 : i % 4 === 2 ? 10 : 5}
         transform={`translate(0, ${dimensions.height}) rotate(180)`}
       />
+      {thumbs && i % 4 === 0 && <Thumb src={thumbs[i / 4]} />}
     </g>
   )
 const drawSegment = (scale) => (segment, i) =>
