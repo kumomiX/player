@@ -8,10 +8,14 @@ export const convertDateToThumbUrl = (url, d) => {
 }
 
 export const convertRanges = (ranges, archiveUrl) => {
+  const url = getArchiveDomain(archiveUrl)
+  return ranges.map((d) => convertDateToThumbUrl(url, d))
+}
+
+export const getArchiveDomain = (archiveUrl) => {
   const re = /^((http[s]?):\/)?\/?([^:\/\s]+)((\/\w+)*\/)([\w\-\.]+)\//i
   const [url] = archiveUrl.match(re)
-
-  return ranges.map((d) => convertDateToThumbUrl(url, d))
+  return url
 }
 
 export const convertArchiveUrl = (url, from, duration) =>

@@ -1,0 +1,32 @@
+.playerWrapper {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+
+  video {
+    background: white;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    // opacity: 0.7;
+  }
+}
+.thumbWrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  p {
+    position: absolute;
+    bottom: 20px;
+    color: red;
+    left: 50%;
+    font-size: 50px;
+  }
+}

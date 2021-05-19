@@ -4,17 +4,17 @@ import * as d3 from 'd3'
 import useResizeObserver from 'use-resize-observer'
 import dayjs from 'dayjs'
 import { UilAngleDown } from '@iconscout/react-unicons'
-import styles from './Controls.module.scss'
+import styles from './TimelineControls.module.scss'
 import { convertRanges } from './utils'
 
 const dimensions = {
-  width: 1600,
+  width: 2200,
   height: 150,
   margin: { top: 5, right: 0, bottom: 5, left: 0 },
 }
 const ticksNum = 25
-const thumbW = 66
-const thumbH = (66 * 9) / 16
+const thumbW = dimensions.width / ticksNum + 2
+const thumbH = thumbW * (9 / 16)
 
 const f = (d) => {
   return d.getMinutes() === 30 ? null : d3.timeFormat('%H:%M')(d)
@@ -29,6 +29,7 @@ export default function ArchiveControls({
   date = dayjs().startOf('day'),
   archiveUrl,
   segments,
+  onDrag,
   onDragEnd,
   onDragStart,
   children,
@@ -64,6 +65,13 @@ export default function ArchiveControls({
   }, [width, date])
 
   const handleDrag = () => {
+    if (onDrag) {
+      const offset = -1 * x.get() + width / 2
+      const time = timeScale.invert(offset)
+      onDrag(time)
+    }
+  }
+  const handleDragEnd = () => {
     const offset = -1 * x.get() + width / 2
     const time = timeScale.invert(offset)
     if (onDragEnd) {
@@ -73,7 +81,7 @@ export default function ArchiveControls({
 
   const [thumbs, setThumbs] = React.useState(null)
   const getThumbs = () => {
-    const ticksQty = Math.floor(width / thumbW)
+    const ticksQty = dimensions.width / ticksNum / 4
     const ranges = timeScale.ticks(ticksQty)
     const urls = convertRanges(ranges, archiveUrl)
     setThumbs(urls)
@@ -100,9 +108,10 @@ export default function ArchiveControls({
           // power: 1,
           restDelta: 1,
         }}
+        onDrag={handleDrag}
         onDragStart={onDragStart}
-        onDragEnd={handleDrag}
-        onDragTransitionEnd={handleDrag}
+        onDragEnd={handleDragEnd}
+        onDragTransitionEnd={handleDragEnd}
         style={{ x }}>
         {timeScale && (
           <svg

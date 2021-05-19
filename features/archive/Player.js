@@ -1,8 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import ArchiveControls from '../../features/archive/Controls'
+import TimelineControls from './TimelineControls'
 import dayjs from 'dayjs'
 import ReactPlayer from 'react-player/lazy'
-import { convertArchiveUrl } from './utils'
+import {
+  convertArchiveUrl,
+  convertDateToThumbUrl,
+  getArchiveDomain,
+} from './utils'
+import styles from './Player.module.scss'
+import { useThrottle } from '@react-hook/throttle'
 
 //[{duration: 43577, from: 1620853200}]
 //https://cvs.fastel.biz/840bc45e-1c7a-4c3f-9c24-0840969e7db4/archive-$utc_time_from_sec-$duration_sec
@@ -67,14 +73,18 @@ export default function ArchivePlayer({
         const newSeg = segments?.find(
           (s) => timeUnix >= s.from && timeUnix <= s.from + s.duration
         )
-        const newIdx = segments.indexOf(newSeg)
-        setCurrentSegmentIdx(newIdx)
-        const diff = timeUnix - newSeg.from
-        player.current.seekTo(diff, 'seconds')
-        setPlaying(true)
+        if (newSeg) {
+          const newIdx = segments.indexOf(newSeg)
+          setCurrentSegmentIdx(newIdx)
+          const diff = timeUnix - newSeg.from
+          player.current.seekTo(diff, 'seconds')
+          setPlaying(true)
+        }
       }
     }
   }
+
+  const [thumb, setThumb] = useThrottle(null, 5, true)
 
   return (
     <>
@@ -107,82 +117,93 @@ export default function ArchivePlayer({
         </button>
       </div>
 
-      <ReactPlayer
-        ref={player}
-        playing={playing}
-        // events
-        onPause={() => setPlaying(false)}
-        onPlay={() => {
-          setPlaying(true)
-        }}
-        onEnded={() => {
-          const nextIdx = currentSegmentIdx + 1
-          const nextSegment = segments[nextIdx]
-          if (nextSegment) {
-            setCurrentSegmentIdx(nextIdx)
-            // setDate(dayjs.unix(nextSegment.from))
-          } else {
-            setPlaying(false)
-            alert('end')
-          }
-        }}
-        onProgress={({ played, playedSeconds }) => {
-          const { from } = segments?.[currentSegmentIdx]
+      <div className={styles.playerWrapper}>
+        <ReactPlayer
+          ref={player}
+          playing={playing}
+          // events
+          onPause={() => setPlaying(false)}
+          onPlay={() => {
+            setPlaying(true)
+          }}
+          onEnded={() => {
+            const nextIdx = currentSegmentIdx + 1
+            const nextSegment = segments[nextIdx]
+            if (nextSegment) {
+              setCurrentSegmentIdx(nextIdx)
+              // setDate(dayjs.unix(nextSegment.from))
+            } else {
+              setPlaying(false)
+              alert('end')
+            }
+          }}
+          onProgress={({ played, playedSeconds }) => {
+            const { from } = segments?.[currentSegmentIdx]
 
-          // const d = date.startOf('day').add(playedSeconds, 's')
-          // setDate(d)
+            // const d = date.startOf('day').add(playedSeconds, 's')
+            // setDate(d)
 
-          //           if (playedSeconds > from + duration) {
-          // setCurrentSegmentIdx
-          //           } else {
+            //           if (playedSeconds > from + duration) {
+            // setCurrentSegmentIdx
+            //           } else {
 
-          //           }
+            //           }
 
-          const d = dayjs.unix(from + playedSeconds)
-          controls.current.jumpTo(d)
-        }}
-        onDuration={(d) => {
-          console.log('upd duration', d)
-          setDuration(d)
-        }}
-        onBuffer={() => {
-          setLoading(true)
-        }}
-        onBufferEnd={() => {
-          setLoading(false)
-        }}
-        // onSeek={}
-        // onReady={() => {
-        //   console.log('seek')
-        //   setPlaying(true)
-        // }}
-        //
-        url={archiveLink}
-        autoPlay
-        muted={true}
-        playsinline
-        width="100%"
-        style={{ flex: 1 }}
-        // height="100%"
-        // style={{
-        //   position: 'absolute',
-        //   top: 0,
-        //   left: 0,
-        // }}
-      />
+            const d = dayjs.unix(from + playedSeconds)
+            controls.current.jumpTo(d)
+          }}
+          onDuration={(d) => {
+            console.log('upd duration', d)
+            setDuration(d)
+          }}
+          onBuffer={() => {
+            setLoading(true)
+          }}
+          onBufferEnd={() => {
+            setLoading(false)
+          }}
+          // onSeek={}
+          // onReady={() => {
+          //   console.log('seek')
+          //   setPlaying(true)
+          // }}
+          //
+          url={archiveLink}
+          autoPlay
+          playsInline
+          width="100%"
+          style={{ flex: 1 }}
+          height="100%"
+          // style={{
+          //   position: 'absolute',
+          //   top: 0,
+          //   left: 0,
+          // }}
+        />
+        {(!playing || loading) && (
+          <div className={styles.thumbWrapper}>
+            <video autoPlay playsInline loop muted src={thumb} />
+            <p>preview</p>
+          </div>
+        )}
+      </div>
 
-      <ArchiveControls
+      <TimelineControls
         segments={segments}
         date={date}
         onDragStart={() => {
           setPlaying(false)
+        }}
+        onDrag={(time) => {
+          const thumbUrl = convertDateToThumbUrl(getArchiveDomain(url), time)
+          setThumb(thumbUrl)
         }}
         onDragEnd={handleDrag}
         archiveUrl={url}>
         {(c) => {
           controls.current = c
         }}
-      </ArchiveControls>
+      </TimelineControls>
     </>
   )
 }
