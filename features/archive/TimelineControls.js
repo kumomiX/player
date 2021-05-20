@@ -13,8 +13,6 @@ const dimensions = {
   margin: { top: 5, right: 0, bottom: 5, left: 0 },
 }
 const ticksNum = 25
-const thumbW = dimensions.width / ticksNum + 2
-const thumbH = thumbW * (9 / 16)
 
 const f = (d) => {
   return d.getMinutes() === 30 ? null : d3.timeFormat('%H:%M')(d)
@@ -78,17 +76,6 @@ export default function ArchiveControls({
       onDragEnd(dayjs(time))
     }
   }
-
-  const [thumbs, setThumbs] = React.useState(null)
-  const getThumbs = () => {
-    const ticksQty = dimensions.width / ticksNum / 4
-    const ranges = timeScale.ticks(ticksQty)
-    const urls = convertRanges(ranges, archiveUrl)
-    setThumbs(urls)
-  }
-  React.useEffect(() => {
-    getThumbs()
-  }, [archiveUrl, width])
 
   return (
     <div className={styles.wrapper}>
@@ -158,19 +145,6 @@ export default function ArchiveControls({
   )
 }
 
-const Thumb = ({ src }) => {
-  return (
-    <foreignObject
-      x="0"
-      y={dimensions.height / 2 + 12}
-      height={thumbH}
-      width={thumbW}>
-      <video height={thumbH} width={thumbW}>
-        <source src={src} type="video/mp4" />
-      </video>
-    </foreignObject>
-  )
-}
 const drawTick = (scale) => (d, i) =>
   (
     <g key={d} transform={`translate(${scale(d)}, 0)`}>
@@ -197,7 +171,6 @@ const drawAxis = (scale, thumbs) => (d, i) =>
         height={i % 4 === 0 ? 15 : i % 4 === 2 ? 10 : 5}
         transform={`translate(0, ${dimensions.height}) rotate(180)`}
       />
-      {thumbs && i % 4 === 0 && <Thumb src={thumbs[i / 4]} />}
     </g>
   )
 const drawSegment = (scale) => (segment, i) =>
